@@ -255,13 +255,21 @@
         html,
         css,
         js: "",
-        editors: "110",
         layout: "left",
         head: '<meta name="viewport" content="width=device-width, initial-scale=1">'
       };
-      const json = JSON.stringify(data);
-      const base64 = btoa(unescape(encodeURIComponent(json)));
-      window.open("https://codepen.io/pen/define?data=" + base64, "_blank", "noopener,noreferrer");
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "https://codepen.io/pen/define";
+      form.target = "_blank";
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "data";
+      input.value = JSON.stringify(data);
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
     });
 
     document.getElementById("copy-llm-prompt").addEventListener("click", async () => {
