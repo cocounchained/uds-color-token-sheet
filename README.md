@@ -2,6 +2,8 @@
 
 A searchable reference for design system color tokens with click-to-copy for token names and values.
 
+**Live site (GitHub Pages):** [https://cocounchained.github.io/uds-color-token-sheet/](https://cocounchained.github.io/uds-color-token-sheet/)
+
 ## Features
 
 - Token nicknames and semantic values (Dark / Light mode)
@@ -11,20 +13,16 @@ A searchable reference for design system color tokens with click-to-copy for tok
 
 ## Usage
 
-Open `index.html` in a browser, or visit your GitHub Pages URL once deployed (e.g. `https://YOUR_USERNAME.github.io/color-tokens/`).
+Open `index.html` in a browser, or visit the [live site](https://cocounchained.github.io/uds-color-token-sheet/) served via GitHub Pages.
 
 ## Customizing Colors
 
 Edit the `PALETTE` object in `index.html` to match your design system hex values.
 
-## Deploy to GitHub Pages
+## GitHub Pages
 
-1. Create a new repository on GitHub (e.g. `color-tokens`).
-2. Add the remote and push:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/color-tokens.git
-   git branch -M main
-   git push -u origin main
-   ```
-3. In the repo: **Settings → Pages** → Source: **Deploy from a branch** → Branch: **main** → **/ (root)** → Save.
-4. Your site will be live at `https://YOUR_USERNAME.github.io/color-tokens/` (may take a few minutes).
+This project is deployed to GitHub Pages from the `main` branch. The site is served at:
+
+**https://cocounchained.github.io/uds-color-token-sheet/**
+
+To update the live site, push changes to `main`. GitHub Pages will automatically rebuild.
