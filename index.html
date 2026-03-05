@@ -41,7 +41,7 @@
           <button type="button" id="nav-home" class="flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-primary hover:bg-slate-50 transition-all duration-300" aria-label="Restore default view">
             <svg class="w-[32px] h-[32px] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           </button>
-          <span class="text-lg font-semibold text-slate-500">Color Tokens</span>
+          <span class="mt-[3px] text-lg font-semibold text-slate-500">Color Tokens</span>
         </div>
         <div id="nav-links"></div>
       </nav>
@@ -52,6 +52,22 @@
       <h1 class="text-3xl font-bold text-slate-900 mb-2">Color Token Reference</h1>
       <p class="text-slate-600 mb-4">Click any token name, value, or color swatch to copy to clipboard.</p>
       <p id="token-summary" class="text-slate-600 mb-4"><strong class="text-slate-800" id="summary-total">—</strong> total token values · <strong class="text-slate-800" id="summary-components">—</strong> distinct components</p>
+      <div class="flex flex-wrap items-center gap-4 mb-4">
+        <div class="flex gap-2">
+          <a id="download-css" href="#" download="uds-color-tokens.css" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all duration-300 text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download CSS
+          </a>
+          <button type="button" id="open-codepen" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all duration-300 text-sm font-medium">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9.408 18.184a.5.5 0 0 1-.816-.387V6.203a.5.5 0 0 1 .816-.387l7.108 5.797a.5.5 0 0 1 0 .774l-7.108 5.797zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>
+            Open in CodePen
+          </button>
+          <button type="button" id="copy-llm-prompt" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-primary hover:text-primary transition-all duration-300 text-sm font-medium" title="Copy one-line prompt for Cursor/Claude">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Copy for Cursor
+          </button>
+        </div>
+      </div>
       <div class="flex flex-wrap items-center gap-4">
         <div class="relative flex-1 min-w-[200px] max-w-md">
           <input type="text" id="search" placeholder="Search by token name or component..." autocomplete="off"
@@ -160,6 +176,34 @@
       return m ? parseInt(m[1]) : 100;
     }
 
+    function toKebab(str) {
+      return str.replace(/([a-z])([A-Z0-9])/g, "$1-$2").replace(/([A-Z0-9])([A-Z][a-z])/g, "$1-$2").toLowerCase();
+    }
+
+    function generateTokensCSS() {
+      const lines = ["/* UDS Color Tokens - Unchained Design System */", "/* Use: var(--token-name) */", ""];
+      lines.push(":root {");
+      TOKENS.forEach(t => {
+        const lightHex = resolveColor(t.lightValue, parseOpacity(t.lightOpacity));
+        const varName = "--" + toKebab(t.tokenNickname);
+        const val = lightHex && !String(lightHex).startsWith("repeating") ? lightHex : "transparent";
+        lines.push(`  ${varName}: ${val}; /* ${t.component} · ${t.property} */`);
+      });
+      lines.push("}");
+      lines.push("");
+      lines.push("@media (prefers-color-scheme: dark) {");
+      lines.push("  :root {");
+      TOKENS.forEach(t => {
+        const darkHex = resolveColor(t.darkValue, parseOpacity(t.darkOpacity));
+        const varName = "--" + toKebab(t.tokenNickname);
+        const val = darkHex && !String(darkHex).startsWith("repeating") ? darkHex : "transparent";
+        lines.push(`    ${varName}: ${val};`);
+      });
+      lines.push("  }");
+      lines.push("}");
+      return lines.join("\n");
+    }
+
     function showToast() {
       const t = document.getElementById("toast");
       t.classList.remove("opacity-0");
@@ -176,6 +220,54 @@
       if (el.dataset.type === "swatch") text = text;
       try {
         await navigator.clipboard.writeText(text);
+        showToast();
+      } catch (err) { console.warn("Copy failed", err); }
+    });
+
+    document.getElementById("download-css").addEventListener("click", (e) => {
+      e.preventDefault();
+      const css = generateTokensCSS();
+      const blob = new Blob([css], { type: "text/css" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "uds-color-tokens.css";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("open-codepen").addEventListener("click", () => {
+      const css = generateTokensCSS();
+      const html = `<!-- UDS Color Tokens Demo -->
+<div class="demo">
+  <div class="swatch" style="background: var(--background-level-0);">--background-level-0</div>
+  <div class="swatch" style="background: var(--background-level-1);">--background-level-1</div>
+  <div class="swatch" style="background: var(--text-tone-heading); color: var(--background-level-0);">--text-tone-heading</div>
+  <div class="swatch" style="background: var(--button-primary-background); color: var(--button-primary-text);">--button-primary-background</div>
+</div>
+<style>
+  .demo { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; }
+  .swatch { padding: 1rem; border-radius: 0.5rem; font-size: 0.75rem; min-width: 120px; }
+</style>`;
+      const data = {
+        title: "UDS Color Tokens",
+        description: "Unchained Design System semantic color tokens",
+        html,
+        css,
+        js: "",
+        editors: "110",
+        layout: "left",
+        head: '<meta name="viewport" content="width=device-width, initial-scale=1">'
+      };
+      const json = JSON.stringify(data);
+      const base64 = btoa(unescape(encodeURIComponent(json)));
+      window.open("https://codepen.io/pen/define?data=" + base64, "_blank", "noopener,noreferrer");
+    });
+
+    document.getElementById("copy-llm-prompt").addEventListener("click", async () => {
+      const prompt = "Use UDS color tokens from https://cocounchained.github.io/uds-color-token-sheet/ — download the CSS and use var(--token-name) for all colors.";
+      try {
+        await navigator.clipboard.writeText(prompt);
         showToast();
       } catch (err) { console.warn("Copy failed", err); }
     });
