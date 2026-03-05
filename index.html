@@ -112,16 +112,19 @@
       setTimeout(() => t.classList.add("opacity-0"), 1200);
     }
 
-    function makeCopyable(el, text, onClick) {
-      el.classList.add("cursor-pointer", "hover:scale-105", "active:scale-95", "transition-all", "duration-300");
-      el.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          showToast();
-          if (onClick) onClick();
-        } catch (e) { console.warn("Copy failed", e); }
-      });
-    }
+    document.getElementById("token-list").addEventListener("click", async (e) => {
+      const el = e.target.closest("[data-copy]");
+      if (!el) return;
+      e.preventDefault();
+      e.stopPropagation();
+      let text = el.dataset.copy;
+      if (!text || text.startsWith("repeating")) return;
+      if (el.dataset.type === "swatch") text = text;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast();
+      } catch (err) { console.warn("Copy failed", err); }
+    });
 
     let viewMode = "grid";
 
@@ -185,9 +188,7 @@
           `;
 
           card.querySelectorAll("[data-copy]").forEach((el) => {
-            const copyVal = el.dataset.copy;
-            const text = el.dataset.type === "swatch" && copyVal && !copyVal.startsWith("repeating") ? copyVal : copyVal;
-            makeCopyable(el, text);
+            el.classList.add("cursor-pointer", "hover:scale-105", "active:scale-95", "transition-all", "duration-300");
           });
 
           grid.appendChild(card);
@@ -254,9 +255,7 @@
         `;
 
         tr.querySelectorAll("[data-copy]").forEach((el) => {
-          const copyVal = el.dataset.copy;
-          const text = el.dataset.type === "swatch" && copyVal && !copyVal.startsWith("repeating") ? copyVal : copyVal;
-          makeCopyable(el, text);
+          el.classList.add("cursor-pointer", "hover:opacity-90", "transition-all", "duration-300");
         });
 
         tbody.appendChild(tr);
